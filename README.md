@@ -19,7 +19,7 @@ This project is suitable for beginners and intermediate learners who want to imp
 
 Overall, the Memory Puzzle Game is a great project for showcasing problem-solving skills and creativity, making it ideal for academic submissions, GitHub portfolios, and internship applications.
 
-<!-- Uploading "Screenshot 2026-03-26 110352.png"... -->
+<img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/2547ad8a-f727-4be7-9665-a8796c660be1" />
 
 
 
