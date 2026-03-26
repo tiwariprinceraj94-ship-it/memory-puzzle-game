@@ -1,0 +1,187 @@
+import tkinter as tk
+from tkinter import messagebox
+import random
+
+class MemoryGame:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("🧠 Memory Puzzle Game")
+        self.root.geometry("520x650")
+        self.root.config(bg="#2c3e50")
+        self.root.resizable(False, False)
+
+        # Game variables
+        self.grid_size = 4
+        self.time_limit = 60
+        self.time_left = self.time_limit
+        self.moves = 0
+        self.matches = 0
+        self.flipped_cards = []
+        self.lock = False
+        self.game_active = False
+
+        self.setup_game()
+        self.create_ui()
+
+    # ---------------- GAME SETUP ---------------- #
+    def setup_game(self):
+        symbols = ['🍎','🍌','🍇','🍒','🥝','🍍','🥥','🍉']
+        self.values = symbols * 2
+        random.shuffle(self.values)
+
+        self.cards = []
+        idx = 0
+        for r in range(self.grid_size):
+            row = []
+            for c in range(self.grid_size):
+                row.append({
+                    "value": self.values[idx],
+                    "flipped": False,
+                    "matched": False
+                })
+                idx += 1
+            self.cards.append(row)
+
+    # ---------------- UI ---------------- #
+    def create_ui(self):
+        title = tk.Label(self.root, text="🧠 MEMORY GAME", 
+                         font=("Arial", 22, "bold"),
+                         bg="#2c3e50", fg="white")
+        title.pack(pady=10)
+
+        self.info = tk.Label(self.root, text="", 
+                             font=("Arial", 14),
+                             bg="#2c3e50", fg="white")
+        self.info.pack()
+
+        self.board = tk.Frame(self.root, bg="#34495e")
+        self.board.pack(pady=20)
+
+        self.buttons = []
+        for r in range(self.grid_size):
+            row = []
+            for c in range(self.grid_size):
+                btn = tk.Button(self.board, text="?",
+                                font=("Arial", 18, "bold"),
+                                width=4, height=2,
+                                bg="#3498db", fg="white",
+                                command=lambda r=r,c=c:self.flip(r,c))
+                btn.grid(row=r, column=c, padx=6, pady=6)
+                row.append(btn)
+            self.buttons.append(row)
+
+        controls = tk.Frame(self.root, bg="#2c3e50")
+        controls.pack(pady=15)
+
+        tk.Button(controls, text="▶ Start",
+                  font=("Arial", 12, "bold"),
+                  bg="#27ae60", fg="white",
+                  width=10, command=self.start).pack(side=tk.LEFT, padx=10)
+
+        tk.Button(controls, text="🔄 Restart",
+                  font=("Arial", 12, "bold"),
+                  bg="#e67e22", fg="white",
+                  width=10, command=self.restart).pack(side=tk.LEFT, padx=10)
+
+        self.update_info()
+
+    # ---------------- GAME LOGIC ---------------- #
+    def start(self):
+        self.game_active = True
+        self.time_left = self.time_limit
+        self.moves = 0
+        self.matches = 0
+        self.flipped_cards = []
+        self.lock = False
+        self.setup_game()
+        self.reset_board()
+        self.timer()
+
+    def restart(self):
+        self.start()
+
+    def reset_board(self):
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                self.buttons[r][c].config(text="?", bg="#3498db")
+
+    def flip(self, r, c):
+        if not self.game_active or self.lock:
+            return
+
+        card = self.cards[r][c]
+        if card["flipped"] or card["matched"]:
+            return
+
+        card["flipped"] = True
+        self.buttons[r][c].config(text=card["value"], bg="#ecf0f1")
+        self.flipped_cards.append((r, c))
+        self.moves += 1
+        self.update_info()
+
+        if len(self.flipped_cards) == 2:
+            self.lock = True
+            self.root.after(800, self.check_match)
+
+    def check_match(self):
+        (r1,c1),(r2,c2) = self.flipped_cards
+        card1 = self.cards[r1][c1]
+        card2 = self.cards[r2][c2]
+
+        if card1["value"] == card2["value"]:
+            card1["matched"] = True
+            card2["matched"] = True
+            self.matches += 1
+        else:
+            card1["flipped"] = False
+            card2["flipped"] = False
+            self.buttons[r1][c1].config(text="?", bg="#3498db")
+            self.buttons[r2][c2].config(text="?", bg="#3498db")
+
+        self.flipped_cards = []
+        self.lock = False
+        self.update_info()
+
+        if self.matches == 8:
+            self.win()
+
+    # ---------------- TIMER ---------------- #
+    def timer(self):
+        if self.game_active and self.time_left > 0:
+            self.time_left -= 1
+            self.update_info()
+            self.root.after(1000, self.timer)
+        elif self.time_left == 0:
+            self.lose()
+
+    # ---------------- RESULTS ---------------- #
+    def win(self):
+        self.game_active = False
+        messagebox.showinfo("🎉 Win!", 
+            f"You won!\nMoves: {self.moves}\nTime left: {self.time_left}s")
+
+    def lose(self):
+        self.game_active = False
+        messagebox.showwarning("⏰ Time Up!",
+            f"Game Over!\nMatches: {self.matches}/8")
+
+    # ---------------- INFO ---------------- #
+    def update_info(self):
+        color = "white"
+        if self.time_left <= 10:
+            color = "#e74c3c"
+        elif self.time_left <= 20:
+            color = "#f1c40f"
+
+        self.info.config(
+            text=f"⏰ {self.time_left}s   |   Moves: {self.moves}   |   Matches: {self.matches}/8",
+            fg=color
+        )
+
+    def run(self):
+        self.root.mainloop()
+
+
+# RUN
+if __name__ == "__main__":
+    MemoryGame().run()
